@@ -2,7 +2,7 @@
 !1st Practice Non-Equilibrium Statistical Physics
 program practica1
     implicit none
-    integer :: N, i_min, i_max, Nb, i, index_min, index_max, Np,N_part,j,k,i_2,m
+    integer :: N, i_min, i_max, Nb, i,index_min, index_max,Np,N_part,j,k,i_2,m
     double precision :: mean,s2,s,bs,tau,dt, gamma1, gamma2, gamma1_vec(1:5),L,&
     x_0(2),genrand_real3, r2, D(5), log_D(5), log_gamma_1(5), a,da,b,db,r_reg
     double precision, dimension(:), allocatable :: numbers_list,xhis,yhis,dyhis,&
@@ -18,8 +18,10 @@ program practica1
     Nb=30 !# boxes histogram
 
     !2. Gaussian distribution: Box-Muller
+    !number generation
     allocate(numbers_list(N),xhis(Nb), yhis(Nb), dyhis(Nb))
     call boxmuller(N,numbers_list,1.d0,0.d0)
+    !parameters calculation
     call par_stats(N,numbers_list,mean,s2,s)
 
     write(*,*)"Mean=",mean,"Sigma=",s
@@ -27,6 +29,7 @@ program practica1
     i_max=index_max(numbers_list, N)
     i_min=index_min(numbers_list, N)
 
+    !histogram
     call histograma(N,numbers_list,numbers_list(i_min)-0.5d0,&
      numbers_list(i_max)+0.5d0,Nb, xhis,yhis,dyhis,bs)
 
@@ -35,12 +38,14 @@ program practica1
         write(1,"(3(e16.8,3X))")xhis(i),yhis(i),dyhis(i)
     enddo
     close(1)
+
     !3. Trajectory of one particle for tau=100dt
     Np=100 
     allocate(val_t(Np+1),val_x(2*(Np+1)))
     dt=0.1d0
     tau=Np*dt
 
+    !simulation of the trajectory without PBC
     call recurrencia_v2(Np,2,1,[0.d0,0.d0],0.d0,tau,pas_euler,val_t,val_x)
 
     open(2, file="euler.dat")
@@ -53,12 +58,13 @@ program practica1
     L=50.d0 !(box from -50 to 50)
     N_part=1000
     allocate(val_x_PBC(2*(Np+1)))
-    open(3, file="apartat4.dat")
-    open(4, file="distribution.dat")
-    open(10, file="gif_coord.dat")
+    open(3, file="apartat4.dat") !all trajectories
+    open(4, file="distribution.dat") !initial and final distributions
+    open(10, file="gif_coord.dat") !extra: gif creation (for personal visualization)
     write(4,"(5(A16,3X))")"#N,""x_0","y_0","x_end","y_end"
     do i=1,N_part
         x_0=[genrand_real3()*2*L,genrand_real3()*2*L]-[50.d0,50.d0]
+        !trajectory simulation with and without PBC
         call recurrencia_v2_PBC(Np,2,1,x_0,0.d0,tau,pas_euler_PBC,val_t,val_x,&
             val_x_PBC)
         write(3,*)
@@ -76,6 +82,7 @@ program practica1
     close(3)
     close(4)
     close(10)
+
     !5. MSD
     gamma1_vec=[0.1d0,1.d0,3.d0,10.d0,30.d0]
     allocate(delta(Np+1),MSD(Np+1))
@@ -86,16 +93,25 @@ program practica1
     do j=1,5
         do k=1,Np+1
             delta(k)=0.d0
-            MSD(k)=0.d0
         enddo
         gamma1=gamma1_vec(j)
-        do i=1,N_part*m
-            x_0=[genrand_real3()*L,genrand_real3()*L]
-            call recurrencia_v2_PBC(Np,2,1,x_0,0.d0,tau,pas_euler_PBC,&
-                val_t,val_x,val_x_PBC)
-            do k=1,2*(Np+1)-1,2
-                r2=((val_x(k)-x_0(1)))**2.d0+(val_x(k+1)-x_0(2))**2.d0
-                delta((k-1)/2+1)=delta((k-1)/2+1)+r2/(N_part*m*1.d0)
+        !average over particles
+        do i=1,N_part
+            do k=1,Np+1
+                MSD(k)=0.d0
+            enddo
+            !expected value of MSD for each particle
+            do i_2=1,m
+                x_0=[genrand_real3()*L,genrand_real3()*L]
+                call recurrencia_v2_PBC(Np,2,1,x_0,0.d0,tau,pas_euler_PBC,&
+                    val_t,val_x,val_x_PBC)
+                do k=1,2*(Np+1)-1,2
+                    r2=(val_x(k)-x_0(1))**2.d0+(val_x(k+1)-x_0(2))**2.d0
+                    MSD((k-1)/2+1)=MSD((k-1)/2+1)+r2/(m*1.d0)
+                enddo
+            enddo
+            do i_2=1,Np+1
+                delta(i_2)=delta(i_2)+MSD(i_2)/dble(N_part)
             enddo
         enddo
         write(5,*)
@@ -105,7 +121,7 @@ program practica1
         do k=1,Np+1
             write(5,"(2(e16.8,3X))")val_t(k),delta(k)
         enddo
-
+        !diffusivity
         D(j)=delta(Np+1)/(4.d0*val_t(Np+1))
 
         write(8,"(2(e16.8,3X))")D(j),gamma1
@@ -116,7 +132,7 @@ program practica1
     close(5)
     close(8)
 
-    !D vs gamma relationship
+    !D vs gamma relationship: D=C*Gamma^A, logD=Alog(Gamma)+B, B=logC
     do i=1,5
         log_D(i)=log(D(i))
         log_gamma_1(i)=log(gamma1_vec(i))
@@ -437,7 +453,7 @@ subroutine boxmuller(ndades,numeros,sigma,mu)
 end subroutine
 
 subroutine boxmuller_2(sigma,mu,g1,g2)
-!retorna numeros aleatoris segons una dist. gaussiana
+!retorna 2 numeros aleatoris segons una dist. gaussiana
 ! amb valor esperat mu i desvacio estandard sigma
     implicit none
     integer :: comptar,i
