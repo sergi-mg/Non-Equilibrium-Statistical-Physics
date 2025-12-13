@@ -72,7 +72,7 @@ program practica2_2
                     do k=1,2*(Np+1)-1,2
                         r=(vector_var(k)-x_0(1))
                         MSD((k-1)/2+1)=MSD((k-1)/2+1)+r**2.d0/(m*1.d0)
-                        disp_part((k-1)/2+1)=disp_part((k-1)/2+1)+r*epsilon
+                        disp_part((k-1)/2+1)=disp_part((k-1)/2+1)+r*epsilon/(m*1.d0)
                     enddo
                 enddo
                 do i_2=1,Np+1
