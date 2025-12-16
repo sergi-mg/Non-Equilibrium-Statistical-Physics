@@ -100,7 +100,43 @@ plt.grid(which="minor", linestyle='--', linewidth=0.3)
 plt.tick_params(axis='both', which='major', labelsize=12)
 plt.savefig("Im2.pdf", bbox_inches='tight')
 plt.show()
+#%%
+#trajectories
+#Tau 1
+data=np.loadtxt("trajectory_tau_1.dat") #change the file name manually
+plt.figure()
+plt.plot(data[:,0],data[:,1],linestyle="dashed",\
+             color=cmap(0),marker="o",markersize=3)
+plt.grid()
+plt.xlabel(r"$t$",fontsize=12)
+plt.ylabel(r"$x$",fontsize=12)
+plt.tick_params(axis='both', which='major', labelsize=12)
+plt.savefig("Trajectory1.pdf", bbox_inches='tight')
+plt.show()
 
+#Tau 10
+data=np.loadtxt("trajectory_tau_10.dat") #change the file name manually
+plt.figure()
+plt.plot(data[:400,0],data[:400,1],linestyle="dashed",\
+             color=cmap(0.4),marker="o",markersize=3)
+plt.grid()
+plt.xlabel(r"$t$",fontsize=12)
+plt.ylabel(r"$x$",fontsize=12)
+plt.tick_params(axis='both', which='major', labelsize=12)
+plt.savefig("Trajectory10.pdf", bbox_inches='tight')
+plt.show()
+
+#Tau 100
+data=np.loadtxt("trajectory_tau_100.dat") #change the file name manually
+plt.figure()
+plt.plot(data[:80,0],data[:80,1],linestyle="dashed",\
+             color=cmap(0.8),marker="o",markersize=3)
+plt.grid()
+plt.xlabel(r"$t$",fontsize=12)
+plt.ylabel(r"$x$",fontsize=12)
+plt.tick_params(axis='both', which='major', labelsize=12)
+plt.savefig("Trajectory100.pdf", bbox_inches='tight')
+plt.show()
 #%%
 #Section 3
 dades=np.loadtxt("correlacio.dat")
