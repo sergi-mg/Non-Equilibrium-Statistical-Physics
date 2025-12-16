@@ -5,6 +5,7 @@ program practica2
     integer :: N, Np,i,i_2,j,k,m,k2
     double precision :: L,D,dt,tau,r2,genrand_real3,gamma,x_0(1:2),tau_vec(1:3),&
     t_max,C
+    character*128 :: fn1
     double precision, dimension(:), allocatable :: vector_var,val_t,MSD,delta&
     ,vector_PBC
     double precision, dimension(:,:), allocatable :: correlacio, correlacio_j
@@ -55,6 +56,13 @@ program practica2
                 x_0=[genrand_real3()*L-L/2.d0,0.d0]
                 call recurrencia_v2_PBC(Np,2,1,x_0,0.d0,t_max,pas_euler_PBC_2,&
                     val_t,vector_var,vector_PBC,zero)
+                if ((i.eq.1).and.(i_2.eq.1)) then
+                    write(fn1,"(A4,F4.0,A5)")"tau_",tau,"_.dat"
+                    open(1,file=fn1)
+                    do k=1,2*(Np+1)-1,2
+                        write(1,"(3(e16.8,3X))")val_t((k-1)/2+1),vector_PBC(k)
+                    enddo
+                endif
                 do k=1,2*(Np+1)-1,2
                     r2=(vector_var(k)-x_0(1))**2.d0
                     MSD((k-1)/2+1)=MSD((k-1)/2+1)+r2/(m*1.d0)
@@ -136,9 +144,9 @@ subroutine pas_euler_PBC_2(x,y_in,y_in_PBC,nvar,h,y_out,y_out_PBC,F)
     y_out_PBC(2)=y_in_PBC(2)*(1-h/tau)+C*g 
     !PBC conditions
     if (y_out_PBC(1).lt.(-L/2.d0)) then
-        y_out_PBC(1)=L/2.d0+mod(y_out_PBC(1),L)
+        y_out_PBC(1)=L/2.d0+mod(y_out_PBC(1),L/2.d0)
     else if (y_out_PBC(1).gt.L/2.d0) then
-        y_out_PBC(1)=-L/2.d0+mod(y_out_PBC(1),L)
+        y_out_PBC(1)=-L/2.d0+mod(y_out_PBC(1),L/2.d0)
     endif
     return
 end subroutine
